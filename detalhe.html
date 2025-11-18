@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head><link rel="icon" type="image/png" href="logo.png">
+
+  <meta charset="UTF-8">
+  <title>Detalhes do Filme - Starfilme</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root{
+      --bg:#0b0b0d; --panel:#151515; --text:#f1f1f1; --muted:#bdbdbd;
+      --brand:#FFD54A; --border:#222;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI', Arial, sans-serif}
+    body{background:var(--bg);color:var(--text);min-height:100vh}
+
+    header{
+      padding:16px 24px;
+      background:linear-gradient(90deg,#152850,#0b0b0d);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .logo-link{
+      color:var(--brand);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight:700;
+      font-size:20px;
+      text-shadow:0 0 6px rgba(255,213,74,0.5);
+    }
+    .logo-link span{
+      letter-spacing:0.5px;
+    }
+    .logo-link:hover{ opacity:0.9; }
+
+    .back-btn{
+      color:#f1f1f1;
+      text-decoration:none;
+      font-size:14px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid #333;
+      background:#151515;
+      white-space:nowrap;
+    }
+    .back-btn:hover{
+      border-color:#FFD54A;
+    }
+
+    main{max-width:1120px;margin:24px auto;padding:0 16px}
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,280px) minmax(0,1fr);
+      gap:24px;
+    }
+    @media (max-width:768px){
+      .layout{grid-template-columns:1fr}
+    }
+    .poster{
+      width:100%;
+      border-radius:16px;
+      object-fit:cover;
+      box-shadow:0 0 20px rgba(0,0,0,.6);
+    }
+    h2{font-size:26px;margin-bottom:8px}
+    .meta{color:var(--muted);margin-bottom:8px}
+    .rating{margin:8px 0 16px;font-size:15px}
+    .taglist span{
+      display:inline-block;
+      margin:4px 4px 0 0;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid #333;
+      font-size:12px;
+      color:#bdbdbd;
+    }
+    .section{margin-top:24px}
+    iframe{
+      width:100%;
+      aspect-ratio:16/9;
+      border:0;
+      border-radius:14px;
+      box-shadow:0 0 24px rgba(0,0,0,.8);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="SiteStarFilme.html" class="logo-link">
+      🎬 <span>Starfilme</span>
+    </a>
+    <a href="SiteStarFilme.html" class="back-btn">⬅ Voltar ao catálogo</a>
+  </header>
+
+  <main id="conteudo">
+    <p>Carregando detalhes do filme...</p>
+  </main>
+
+  <script>
+    const API_KEY = 'd9fd2fb261b6cc781dbc577cee9ae3c0';
+    const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+    const params = new URLSearchParams(window.location.search);
+    const movieId = params.get('id');
+
+    const main = document.getElementById('conteudo');
+
+    async function carregarDetalhes(){
+      if (!movieId){
+        main.innerHTML = '<p>Filme não informado. <a href="SiteStarFilme.html">Voltar</a></p>';
+        return;
+      }
+
+      try{
+        const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&language=pt-BR&append_to_response=videos`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Erro HTTP');
+        const filme = await resp.json();
+
+        const ano = (filme.release_date || '').slice(0,4) || '—';
+        const generos = (filme.genres || []).map(g => g.name);
+        const duracao = filme.runtime ? (filme.runtime + ' min') : null;
+        const paises = (filme.production_countries || []).map(c => c.name);
+
+        let trailer = null;
+        if (filme.videos && filme.videos.results){
+          trailer =
+            filme.videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube') ||
+            filme.videos.results.find(v => v.site === 'YouTube');
+        }
+        const trailerEmbed = trailer
+          ? `https://www.youtube.com/embed/${trailer.key}?rel=0`
+          : null;
+
+        main.innerHTML = `
+          <section class="layout">
+            <div>
+              <img
+                class="poster"
+                src="${filme.poster_path ? IMG_BASE + filme.poster_path : 'posters/_placeholder.jpg'}"
+                alt="Poster de ${filme.title}"
+              >
+            </div>
+            <div>
+              <h2>${filme.title}</h2>
+              <div class="meta">
+                ${ano}
+                ${generos.length ? ' • ' + generos.join(', ') : ''}
+                ${duracao ? ' • ' + duracao : ''}
+              </div>
+              <div class="rating">
+                ⭐ <strong>${(filme.vote_average || 0).toFixed(1)}</strong>/10
+                ${filme.vote_count ? ` (${filme.vote_count} votos)` : ''}
+              </div>
+              <p>${filme.overview || 'Sem sinopse disponível em português.'}</p>
+
+              <div class="section">
+                <h3>Informações extras</h3>
+                <p><strong>Idiomas:</strong> ${(filme.spoken_languages || []).map(l => l.name || l.english_name).join(', ') || '—'}</p>
+                <p><strong>Países:</strong> ${paises.join(', ') || '—'}</p>
+              </div>
+
+              <div class="section taglist">
+                <h3>Gêneros</h3>
+                ${generos.map(g => `<span>${g}</span>`).join('') || '<span>Não informado</span>'}
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h3>Trailer</h3>
+            ${
+              trailerEmbed
+                ? `<iframe src="${trailerEmbed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen title="Trailer de ${filme.title}"></iframe>`
+                : '<p>Trailer não encontrado para este título.</p>'
+            }
+          </section>
+        `;
+      }catch(err){
+        console.error(err);
+        main.innerHTML = '<p>Erro ao carregar detalhes. Verifique a chave da API. <a href="SiteStarFilme.html">Voltar</a></p>';
+      }
+    }
+
+    carregarDetalhes();
+  </script>
+</body>
+</html>

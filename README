@@ -1,0 +1,68 @@
+Resumo Acadêmico – Projeto Starfilme
+1. Introdução
+O projeto Starfilme consiste no desenvolvimento de uma aplicação web destinada à recomendação, consulta e análise de filmes. A solução integra recursos modernos de interação dousuário, navegação responsiva e consumo de dados por meio de uma API externa, oferecendouma experiência visual similar às plataformas comerciais de streaming.
+2. Integração com a API TMDB
+O sistema foi conectado à API The Movie Database (TMDB), permitindo:
+• Obtenção de informações completas sobre filmes;
+• Trailers oficiais via YouTube;
+• Listas de destaques semanais (Trending);
+• Recomendações inteligentes fornecidas pela própria API;
+• Dados em português utilizando language=pt-BR;
+• Carregamento de imagens em alta qualidade.
+A aplicação realiza a normalização dos dados recebidos, garantindo consistência e facilitando sua exibição na interface.
+3. Funcionalidades Implementadas
+3.1 Página Principal
+A página inicial contém:
+• Busca dinâmica com debounce;
+• Cards interativos contendo poster, sinopse e avaliação;
+• Filtros por favoritos, status e gêneros;
+• Ordenação por título, ano e nota;
+• Exibição de filmes em destaque através de um carrossel.
+3.2 Carrossel de Destaques
+Foi implementado um carrossel horizontal com:
+• Navegação lateral via setas;
+• Exibição de filmes em destaque da semana;
+• Exclusão automática de títulos já exibidos no catálogo principal.
+3.3 Catálogo Dinâmico por Seleção
+O catálogo inclui um seletor de categorias, apresentando:
+• Populares (Popular)
+• Mais bem avaliados (Top Rated)
+• Lançamentos (Now Playing)
+Essa abordagem garante diversidade e atualização frequente dos resultados.
+4. Persistência de Dados (LocalStorage)
+Todo o progresso do usuário é salvo no navegador.
+4.1 Favoritos
+Permite favoritar, desfavoritar e filtrar filmes marcados como favoritos.
+4.2 Status
+Sistema inspirado no TV Time:
+• Quero ver
+• Visto
+• Abandonei
+4.3 Notas e Reviews
+O usuário pode registrar:
+• Nota de 0 a 10
+• Comentários de até 140 caracteres
+5. Página de Detalhes
+A página detalhe.html apresenta:
+• Poster em alta resolução;
+• Nota média e quantidade de votos;
+• Sinopse estendida;
+• Gêneros, países, idiomas e duração;
+• Trailer exibido via iframe;
+• Listagem de filmes recomendados pela API;
+• Botão de retorno e logo clicável.
+6. Interface e Experiência do Usuário
+O projeto utiliza:
+• Tema escuro moderno;
+• Paleta de cores neon amarela;
+• Layout responsivo;
+• Favicon personalizado;
+• Carregamento progressivo de imagens;
+• Feedbacks visuais de carregamento.
+7. Estrutura do Projeto
+SiteStarFilme.html — Página principal
+detalhe.html — Página de informações avançadas
+logo.png — Favicon e identidade visual
+8. Conclusão
+O Starfilme demonstra integração eficiente entre front-end, API externa e persistência local. O resultado é uma aplicação moderna, responsiva e academicamente adequada, podendo ser
+utilizada tanto como estudo de caso quanto como projeto de portfólio profissional.

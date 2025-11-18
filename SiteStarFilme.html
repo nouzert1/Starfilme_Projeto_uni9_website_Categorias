@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head><link rel="icon" type="image/png" href="logo.png">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Starfilme</title>
+  <style>
+    :root{
+      --bg:#0b0b0d; --panel:#151515; --text:#f1f1f1; --muted:#bdbdbd;
+      --brand:#FFD54A; --brand-2:#ffe48c; --border:#222;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI', Arial, sans-serif}
+    body{background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* HEADER */
+    header{
+      background:linear-gradient(90deg,#152850,#0b0b0d);
+      padding:20px;
+      text-align:center;
+    }
+    .logo-link{
+      color:var(--brand);
+      text-decoration:none;
+      font-size:26px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      text-shadow:0 0 10px rgba(255,213,74,0.4);
+    }
+    .logo-link:hover{ opacity:.8; }
+
+    #app{max-width:1120px;margin:20px auto;padding:0 16px}
+    .sobre{background:var(--panel);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 0 12px rgba(255,255,255,.05)}
+
+    /* CONTROLES */
+    .controls{
+      display:grid;
+      grid-template-columns:1fr auto auto auto auto auto; /* + seletor de origem */
+      gap:10px;
+      align-items:center;
+      margin:16px 0
+    }
+    .search{display:flex;background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+    .search input{flex:1;background:transparent;border:none;color:#fff;outline:none}
+    .btn{background:var(--brand);border:none;color:#000;padding:8px 14px;border-radius:999px;font-weight:700;cursor:pointer}
+    .btn:hover{background:var(--brand-2)}
+    .select,.toggle{background:var(--panel);border:1px solid var(--border);color:#eaeaea;border-radius:10px;padding:8px 10px}
+    .toggle{display:flex;gap:8px;align-items:center}
+    .toggle input{accent-color:var(--brand)}
+
+    /* CHIPS */
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .chip{padding:6px 10px;border-radius:999px;background:#1d1d1f;border:1px solid #2a2a2a;color:#eaeaea;cursor:pointer}
+    .chip.active{border-color:var(--brand);box-shadow:0 0 0 2px #FFD54A33}
+
+    /* CARROSSEL (estilo Netflix) */
+    .carousel{
+      margin:16px 0 24px;
+    }
+    .carousel h2{
+      font-size:20px;
+      margin-bottom:8px;
+    }
+    .carousel-row{
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      padding-bottom:6px;
+      scrollbar-width:thin;
+    }
+    .carousel-row::-webkit-scrollbar{
+      height:6px;
+    }
+    .carousel-row::-webkit-scrollbar-track{
+      background:#111;
+    }
+    .carousel-row::-webkit-scrollbar-thumb{
+      background:#333;
+      border-radius:999px;
+    }
+    .carousel-item{
+      min-width:150px;
+      max-width:150px;
+      background:#151515;
+      border-radius:10px;
+      border:1px solid var(--border);
+      flex-shrink:0;
+      cursor:pointer;
+      overflow:hidden;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .carousel-item:hover{
+      transform:translateY(-3px);
+      box-shadow:0 8px 24px rgba(255,213,74,0.25);
+    }
+    .carousel-poster{
+      width:100%;
+      aspect-ratio:2/3;
+      object-fit:cover;
+      display:block;
+      background:#0f0f10 url('posters/_placeholder.jpg') center/cover no-repeat;
+    }
+    .carousel-caption{
+      padding:6px 8px 8px;
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* GRID */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+    .card{background:#151515;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,.25);transition:transform .25s, box-shadow .25s;cursor:pointer}
+    .card:hover{transform:translateY(-4px);box-shadow:0 8px 28px rgba(255,213,74,.25)}
+
+    .poster{
+      width:100%;aspect-ratio:16/9;object-fit:cover;
+      background:#0f0f10 url('posters/_placeholder.jpg') center/cover no-repeat;
+      opacity:0; transition:opacity .25s ease;
+    }
+    .poster.loaded{opacity:1;}
+
+    .info{padding:12px}
+    .title-row{display:flex;justify-content:space-between;gap:10px}
+    .title{font-size:16px;font-weight:700}
+    .fav{background:transparent;border:1px solid var(--border);color:#eaeaea;padding:6px 10px;border-radius:10px;cursor:pointer}
+    .fav.active{border-color:var(--brand);color:var(--brand)}
+    .meta{color:var(--muted);font-size:13px;margin:6px 0 8px}
+    .rating{font-size:14px;color:#FFD54A;margin-bottom:8px}
+    .badges{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+    .badge{font-size:11px;padding:3px 7px;border-radius:999px;border:1px solid #2a2a2a;background:#101114;color:#cfcfcf}
+    .badge.watch{border-color:#FFD54A55;color:#ffe48c}
+    .badge.seen{border-color:#55a0ff55;color:#8cc7ff}
+    .badge.drop{border-color:#ff6b6b55;color:#ffb0b0}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:#eaeaea;padding:8px 12px;border-radius:10px;cursor:pointer}
+    .btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+    .mini{font-size:12px;padding:6px 8px}
+    .empty{display:none;text-align:center;color:#a8a8a8;margin:24px 0}
+
+    /* Carregar mais */
+    .load-more-wrapper{
+      text-align:center;
+      margin:16px 0 32px;
+    }
+    #loadMore{
+      display:none;
+      min-width:160px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a href="SiteStarFilme.html" class="logo-link">
+      🎬 <span>Starfilme</span>
+    </a>
+  </header>
+
+  <div id="app" aria-live="polite">
+    <section class="sobre">
+      <h2>Sobre a Starfilme</h2>
+      <p>
+        Catálogo de recomendações conectado à API do TMDB:
+        <strong>destaques em carrossel</strong>, <strong>busca global</strong>, seletor de
+        <strong>origem do catálogo</strong>, <strong>favoritos</strong>,
+        status à la TV Time e <strong>detalhes com trailer</strong>.
+      </p>
+    </section>
+
+    <!-- CARROSSEL: apenas destaques -->
+    <section class="carousel" id="trendingSection">
+      <h2>Destaques da semana</h2>
+      <div class="carousel-row" id="trendingRow"></div>
+    </section>
+
+    <div class="controls">
+      <label class="search" aria-label="Pesquisar">
+        <input id="q" placeholder="Digite o nome de um filme (ex.: 'Ponyo', 'Vingadores')" />
+      </label>
+
+      <!-- NOVO: seletor de origem -->
+      <select id="listType" class="select" aria-label="Origem do catálogo">
+        <option value="popular">Populares</option>
+        <option value="top_rated">Melhores avaliados</option>
+        <option value="now_playing">Lançamentos</option>
+      </select>
+
+      <select id="sort" class="select" aria-label="Ordenar por">
+        <option value="titulo-asc">Título (A–Z)</option>
+        <option value="titulo-desc">Título (Z–A)</option>
+        <option value="ano-desc">Ano (mais novo)</option>
+        <option value="ano-asc">Ano (mais antigo)</option>
+        <option value="nota-desc">Nota (maior)</option>
+        <option value="nota-asc">Nota (menor)</option>
+      </select>
+
+      <select id="statusFilter" class="select" aria-label="Filtrar por status">
+        <option value="all">Todos</option>
+        <option value="watch">Quero ver</option>
+        <option value="seen">Visto</option>
+        <option value="drop">Abandonei</option>
+      </select>
+
+      <label class="toggle" for="onlyFavs">
+        <input type="checkbox" id="onlyFavs"> Mostrar favoritos
+      </label>
+
+      <button class="btn" id="clear">Limpar</button>
+    </div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty">Carregando catálogo...</div>
+
+    <div class="load-more-wrapper">
+      <button class="btn" id="loadMore">Carregar mais</button>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function(){
+    // ===== CONFIG TMDB =====
+    const API_KEY = 'd9fd2fb261b6cc781dbc577cee9ae3c0';
+    const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+    const TMDB_GENRES = {
+      28:'Ação', 12:'Aventura', 16:'Animação', 35:'Comédia',
+      80:'Crime', 99:'Documentário', 18:'Drama', 10751:'Família',
+      14:'Fantasia', 36:'História', 27:'Terror', 10402:'Música',
+      9648:'Mistério', 10749:'Romance', 878:'Ficção Científica',
+      10770:'Cinema TV', 53:'Suspense', 10752:'Guerra', 37:'Faroeste'
+    };
+
+    // LISTAS
+    let MOVIES = [];    // o que vai para a grade
+    let TRENDING = [];  // só carrossel
+
+    // paginação / modos
+    let currentMode = 'catalog';     // 'catalog' | 'search'
+    let currentListType = 'popular'; // 'popular' | 'top_rated' | 'now_playing'
+    let currentQuery = '';
+    let currentPage = 1;
+    let totalPages = 1;
+
+    const LISTS = {
+      popular:    { movies: [], totalPages: 1, loadedPages: 0 },
+      top_rated:  { movies: [], totalPages: 1, loadedPages: 0 },
+      now_playing:{ movies: [], totalPages: 1, loadedPages: 0 }
+    };
+
+    // ELEMENTOS
+    const grid  = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const q     = document.getElementById('q');
+    const chips = document.getElementById('chips');
+    const clear = document.getElementById('clear');
+    const sortSel = document.getElementById('sort');
+    const statusFilter = document.getElementById('statusFilter');
+    const onlyFavs = document.getElementById('onlyFavs');
+    const listTypeSel = document.getElementById('listType');
+
+    const trendingSection = document.getElementById('trendingSection');
+    const trendingRow     = document.getElementById('trendingRow');
+    const loadMoreBtn     = document.getElementById('loadMore');
+
+    // LOCALSTORAGE
+    const FAV_KEY = 'starfilme_favs';
+    let favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]'));
+    function saveFavs(){ localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(favs))); }
+
+    const LS_STATUS = 'starfilme_status';
+    const LS_RATINGS = 'starfilme_ratings';
+    const statusMap = JSON.parse(localStorage.getItem(LS_STATUS) || '{}');
+    const ratingMap = JSON.parse(localStorage.getItem(LS_RATINGS) || '{}');
+
+    function setStatus(id, s){
+      statusMap[id] = s;
+      localStorage.setItem(LS_STATUS, JSON.stringify(statusMap));
+    }
+    function getStatus(id){ return statusMap[id] || null; }
+
+    function setRating(id, score, review){
+      ratingMap[id] = {
+        score: Number(score) || 0,
+        review: (review || '').slice(0,140)
+      };
+      localStorage.setItem(LS_RATINGS, JSON.stringify(ratingMap));
+    }
+    function getRating(id){ return ratingMap[id] || {score:0, review:''}; }
+
+    // GENEROS / CHIPS
+    const ALL_GENRES = Array.from(new Set(Object.values(TMDB_GENRES))).sort();
+    const activeGenres = new Set();
+
+    function starSVG(){
+      return '<svg class="star" width="16" height="16" viewBox="0 0 24 24" fill="#FFD54A" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.85 1.417 8.26L12 19.771l-7.417 4.087L6 15.598 0 9.748l8.332-1.73L12 .588z"/></svg>';
+    }
+
+    function renderChips(){
+      chips.innerHTML = '';
+      ALL_GENRES.forEach(function(g){
+        const el = document.createElement('button');
+        el.className = 'chip';
+        el.textContent = g;
+        el.onclick = function(){
+          if (activeGenres.has(g)) {
+            activeGenres.delete(g);
+            el.classList.remove('active');
+          } else {
+            activeGenres.add(g);
+            el.classList.add('active');
+          }
+          render();
+        };
+        chips.appendChild(el);
+      });
+    }
+
+    // NORMALIZAR FILME
+    function normalizeMovie(m){
+      const generos = (m.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean);
+      const ano = (m.release_date || m.first_air_date || '').slice(0,4) || '—';
+      return {
+        id: String(m.id),
+        titulo: m.title || m.name,
+        ano: ano,
+        genero: generos,
+        nota: m.vote_average || 0,
+        poster: m.poster_path ? (IMG_BASE + m.poster_path) : 'posters/_placeholder.jpg',
+        sinopse: m.overview || 'Sem descrição disponível.',
+        tags: generos.map(g => g.toLowerCase())
+      };
+    }
+
+    // API (com paginação)
+    async function searchMovies(term, page=1){
+      if (!term) return {movies:[], totalPages:1};
+      const url = `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&language=pt-BR&include_adult=false&page=${page}&query=${encodeURIComponent(term)}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      return {
+        movies: (data.results || []).map(normalizeMovie),
+        totalPages: data.total_pages || 1
+      };
+    }
+
+    async function loadTrending(page=1){
+      const url = `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}&language=pt-BR&page=${page}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      return {
+        movies: (data.results || []).map(normalizeMovie),
+        totalPages: data.total_pages || 1
+      };
+    }
+
+    async function loadPopular(page=1){
+      const url = `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=pt-BR&page=${page}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      return {
+        movies: (data.results || []).map(normalizeMovie),
+        totalPages: data.total_pages || 1
+      };
+    }
+
+    async function loadTopRated(page=1){
+      const url = `https://api.themoviedb.org/3/movie/top_rated?api_key=${API_KEY}&language=pt-BR&page=${page}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      return {
+        movies: (data.results || []).map(normalizeMovie),
+        totalPages: data.total_pages || 1
+      };
+    }
+
+    async function loadNowPlaying(page=1){
+      const url = `https://api.themoviedb.org/3/movie/now_playing?api_key=${API_KEY}&language=pt-BR&page=${page}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      return {
+        movies: (data.results || []).map(normalizeMovie),
+        totalPages: data.total_pages || 1
+      };
+    }
+
+    async function loadList(type, page=1){
+      if (type === 'popular')     return loadPopular(page);
+      if (type === 'top_rated')   return loadTopRated(page);
+      if (type === 'now_playing') return loadNowPlaying(page);
+      return {movies:[], totalPages:1};
+    }
+
+    // CONTROLE DO BOTÃO "CARREGAR MAIS"
+    function updateLoadMoreVisibility(){
+      if (currentMode === 'catalog' && currentPage < totalPages){
+        loadMoreBtn.style.display = 'inline-block';
+      } else if (currentMode === 'search' && currentPage < totalPages){
+        loadMoreBtn.style.display = 'inline-block';
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+    }
+
+    // CARROSSEL TRENDING (SÓ DESTAQUES)
+    function renderTrending(){
+      if (!TRENDING.length){
+        trendingSection.style.display = 'none';
+        return;
+      }
+      trendingSection.style.display = 'block';
+      trendingRow.innerHTML = '';
+
+      TRENDING.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'carousel-item';
+        item.onclick = function(){
+          window.location.href = 'detalhe.html?id=' + encodeURIComponent(f.id);
+        };
+
+        const img = document.createElement('img');
+        img.className = 'carousel-poster';
+        img.onerror = function(){
+          this.onerror = null;
+          this.src = 'posters/_placeholder.jpg';
+        };
+        img.src = f.poster;
+        img.alt = 'Poster de ' + f.titulo;
+
+        const caption = document.createElement('div');
+        caption.className = 'carousel-caption';
+        caption.textContent = f.titulo;
+
+        item.appendChild(img);
+        item.appendChild(caption);
+        trendingRow.appendChild(item);
+      });
+    }
+
+    // FILTROS / ORDEM
+    function applyFilters(data){
+      let arr = data.slice();
+
+      const st = statusFilter.value;
+      if (st !== 'all'){
+        arr = arr.filter(f => getStatus(f.id) === st);
+      }
+
+      if (onlyFavs.checked){
+        arr = arr.filter(f => favs.has(f.id));
+      }
+
+      if (activeGenres.size > 0){
+        arr = arr.filter(f =>
+          f.genero.some(g => activeGenres.has(g))
+        );
+      }
+
+      const [field, dir] = sortSel.value.split('-');
+      arr.sort((a,b)=>{
+        let va, vb;
+        if (field === 'titulo'){ va = (a.titulo || '').toLowerCase(); vb = (b.titulo || '').toLowerCase(); }
+        else if (field === 'ano'){ va = Number(a.ano) || 0; vb = Number(b.ano) || 0; }
+        else { va = a.nota || 0; vb = b.nota || 0; }
+
+        if (va < vb) return dir === 'asc' ? -1 : 1;
+        if (va > vb) return dir === 'asc' ?  1 : -1;
+        return 0;
+      });
+
+      return arr;
+    }
+
+    // RENDER GRID
+    function render(){
+      const filtered = applyFilters(MOVIES);
+
+      grid.innerHTML = '';
+
+      if (!filtered.length){
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      filtered.forEach(function(f){
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.setAttribute('data-id', f.id);
+
+        const img = document.createElement('img');
+        img.className = 'poster';
+        img.onerror = function(){
+          this.onerror = null;
+          this.src = 'posters/_placeholder.jpg';
+          this.classList.add('loaded');
+        };
+        img.onload = function(){ this.classList.add('loaded'); };
+        img.decoding = 'async';
+        img.loading = 'lazy';
+        img.alt = 'Poster de ' + f.titulo;
+        img.src = f.poster;
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const row = document.createElement('div');
+        row.className = 'title-row';
+
+        const t = document.createElement('div');
+        t.className = 'title';
+        t.textContent = f.titulo;
+
+        const favBtn = document.createElement('button');
+        const isFav = favs.has(f.id);
+        favBtn.className = 'fav' + (isFav ? ' active' : '');
+        favBtn.setAttribute('aria-label', (isFav ? 'Remover dos favoritos: ' : 'Adicionar aos favoritos: ') + f.titulo);
+        favBtn.textContent = isFav ? '♥' : '♡';
+        favBtn.onclick = function(ev){
+          ev.stopPropagation();
+          if (favs.has(f.id)) favs.delete(f.id);
+          else favs.add(f.id);
+          saveFavs();
+          render();
+        };
+
+        row.appendChild(t);
+        row.appendChild(favBtn);
+
+        const m = document.createElement('div');
+        m.className = 'meta';
+        m.textContent = f.ano + (f.genero.length ? (' • ' + f.genero.join(', ')) : '');
+
+        const rating = document.createElement('div');
+        rating.className = 'rating';
+        rating.innerHTML = starSVG() + ' <strong>' + (f.nota || 0).toFixed(1) + '</strong>/10';
+
+        const badges = document.createElement('div');
+        badges.className = 'badges';
+        const s = getStatus(f.id);
+        if (s === 'watch') badges.innerHTML += '<span class="badge watch">Quero ver</span>';
+        if (s === 'seen')  badges.innerHTML += '<span class="badge seen">Visto</span>';
+        if (s === 'drop')  badges.innerHTML += '<span class="badge drop">Abandonei</span>';
+
+        const desc = document.createElement('p');
+        desc.textContent = f.sinopse;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const btnWatch = document.createElement('button');
+        btnWatch.className = 'btn-ghost mini';
+        btnWatch.textContent = 'Quero ver';
+        btnWatch.onclick = function(ev){
+          ev.stopPropagation();
+          setStatus(f.id,'watch'); render();
+        };
+
+        const btnSeen = document.createElement('button');
+        btnSeen.className = 'btn-ghost mini';
+        btnSeen.textContent = 'Marcar visto';
+        btnSeen.onclick = function(ev){
+          ev.stopPropagation();
+          setStatus(f.id,'seen'); render();
+        };
+
+        const btnDrop = document.createElement('button');
+        btnDrop.className = 'btn-ghost mini';
+        btnDrop.textContent = 'Abandonei';
+        btnDrop.onclick = function(ev){
+          ev.stopPropagation();
+          setStatus(f.id,'drop'); render();
+        };
+
+        const user = getRating(f.id);
+        const scoreInput = document.createElement('input');
+        scoreInput.type = 'number';
+        scoreInput.min = '0';
+        scoreInput.max = '10';
+        scoreInput.step = '0.5';
+        scoreInput.value = user.score || '';
+        scoreInput.placeholder = 'minha nota';
+        scoreInput.className = 'select mini';
+        scoreInput.style.width = '98px';
+        scoreInput.onclick = e => e.stopPropagation();
+        scoreInput.onchange = () => { setRating(f.id, scoreInput.value, user.review); render(); };
+
+        const btnReview = document.createElement('button');
+        btnReview.className = 'btn-ghost mini';
+        btnReview.textContent = 'Review';
+        btnReview.onclick = function(ev){
+          ev.stopPropagation();
+          const current = getRating(f.id).review || '';
+          const text = prompt('Escreva sua opinião (até 140 caracteres):', current);
+          if (text !== null){
+            setRating(f.id, getRating(f.id).score, text);
+            render();
+          }
+        };
+
+        actions.appendChild(btnWatch);
+        actions.appendChild(btnSeen);
+        actions.appendChild(btnDrop);
+        actions.appendChild(scoreInput);
+        actions.appendChild(btnReview);
+
+        const mini = getRating(f.id);
+        const miniDiv = document.createElement('div');
+        if (mini.review){
+          miniDiv.style.cssText = 'margin-top:6px;color:#cfcfcf;font-size:12px;opacity:.9';
+          miniDiv.textContent = '“' + mini.review + '”';
+        }
+
+        info.appendChild(row);
+        info.appendChild(m);
+        info.appendChild(rating);
+        info.appendChild(badges);
+        info.appendChild(desc);
+        info.appendChild(actions);
+        if (mini.review) info.appendChild(miniDiv);
+
+        card.appendChild(img);
+        card.appendChild(info);
+
+        // abrir página de detalhes
+        card.addEventListener('click', function(){
+          window.location.href = 'detalhe.html?id=' + encodeURIComponent(f.id);
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    // garante que o catálogo da lista atual está carregado
+    async function showCatalogForCurrentType(){
+      currentMode = 'catalog';
+      const type = currentListType;
+      const info = LISTS[type];
+
+      if (info.loadedPages === 0){
+        empty.textContent = 'Carregando catálogo...';
+        empty.style.display = 'block';
+        try{
+          const res = await loadList(type,1);
+          info.movies = res.movies;
+          info.totalPages = res.totalPages || 1;
+          info.loadedPages = 1;
+        }catch(e){
+          console.error(e);
+          empty.textContent = 'Não foi possível carregar o catálogo.';
+          loadMoreBtn.style.display = 'none';
+          return;
+        }
+      }
+
+      MOVIES = info.movies.slice();
+      currentPage = info.loadedPages;
+      totalPages = info.totalPages;
+      render();
+      updateLoadMoreVisibility();
+    }
+
+    // BUSCA (debounce)
+    let searchTimeout = null;
+    async function handleSearch(){
+      const term = q.value.trim();
+      if (!term){
+        await showCatalogForCurrentType();
+        return;
+      }
+      empty.textContent = 'Carregando resultados...';
+      empty.style.display = 'block';
+
+      try{
+        currentMode = 'search';
+        currentQuery = term;
+        currentPage = 1;
+        const res = await searchMovies(term, 1);
+        MOVIES = res.movies;
+        totalPages = res.totalPages || 1;
+
+        if (!MOVIES.length){
+          empty.textContent = 'Nenhum filme encontrado para "' + term + '".';
+        }
+        render();
+        updateLoadMoreVisibility();
+      }catch(err){
+        console.error(err);
+        empty.textContent = 'Erro ao buscar filmes. Verifique a chave da API.';
+        empty.style.display = 'block';
+        loadMoreBtn.style.display = 'none';
+      }
+    }
+
+    q.addEventListener('input', function(){
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(handleSearch, 600);
+    });
+
+    sortSel.addEventListener('change', render);
+    statusFilter.addEventListener('change', render);
+    onlyFavs.addEventListener('change', render);
+
+    // Troca de origem do catálogo (popular / top_rated / now_playing)
+    listTypeSel.addEventListener('change', async function(){
+      currentListType = listTypeSel.value;
+      currentQuery = '';
+      q.value = '';
+      await showCatalogForCurrentType();
+    });
+
+    clear.addEventListener('click', async function(){
+      q.value = '';
+      sortSel.value = 'titulo-asc';
+      statusFilter.value = 'all';
+      onlyFavs.checked = false;
+      activeGenres.clear();
+      Array.prototype.forEach.call(chips.children, function(c){ c.classList.remove('active'); });
+
+      currentQuery = '';
+      await showCatalogForCurrentType();
+    });
+
+    // Botão Carregar mais
+    loadMoreBtn.addEventListener('click', async function(){
+      if (currentPage >= totalPages) return;
+
+      try{
+        if (currentMode === 'search'){
+          const nextPage = currentPage + 1;
+          const res = await searchMovies(currentQuery, nextPage);
+          currentPage = nextPage;
+          totalPages = res.totalPages || totalPages;
+          MOVIES = MOVIES.concat(res.movies);
+          render();
+          updateLoadMoreVisibility();
+        } else {
+          const type = currentListType;
+          const info = LISTS[type];
+          const nextPage = currentPage + 1;
+          const res = await loadList(type, nextPage);
+          currentPage = nextPage;
+          info.loadedPages = nextPage;
+          info.totalPages = res.totalPages || info.totalPages;
+          info.movies = info.movies.concat(res.movies);
+          MOVIES = info.movies.slice();
+          totalPages = info.totalPages;
+          render();
+          updateLoadMoreVisibility();
+        }
+      }catch(e){
+        console.error(e);
+      }
+    });
+
+    // INIT
+    renderChips();
+    (async function init(){
+      try{
+        empty.textContent = 'Carregando catálogo...';
+        empty.style.display = 'block';
+        currentMode = 'catalog';
+        currentListType = 'popular';
+        listTypeSel.value = 'popular';
+
+        // Carregar destaques (carrossel) + catálogo inicial (popular)
+        const [trendRes, popRes] = await Promise.all([
+          loadTrending(1),
+          loadList('popular',1)
+        ]);
+
+        // Destaques
+        TRENDING = trendRes.movies;
+        renderTrending();
+
+        // Popular
+        LISTS.popular.movies = popRes.movies;
+        LISTS.popular.totalPages = popRes.totalPages || 1;
+        LISTS.popular.loadedPages = 1;
+
+        MOVIES = LISTS.popular.movies.slice();
+        currentPage = LISTS.popular.loadedPages;
+        totalPages = LISTS.popular.totalPages;
+
+        render();
+        updateLoadMoreVisibility();
+      }catch(e){
+        console.error(e);
+        empty.textContent = 'Não foi possível carregar o catálogo.';
+        empty.style.display = 'block';
+        loadMoreBtn.style.display = 'none';
+      }
+    })();
+  });
+  </script>
+</body>
+</html>
